@@ -272,48 +272,49 @@ function renderPanorama() {
 function renderRegional() {
     const reg = state.data.regional[state.regional];
     const d = disc(state.regional);
-    const dated = reg.by_year.length > 0;
-    let labels, pcts, counts, total;
-    if (dated) {
-        const counter = {};
-        reg.by_year.filter(t => inRange(t.year)).forEach(t => { counter[t.region] = (counter[t.region] || 0) + 1; });
-        const entries = Object.entries(counter).sort((a, b) => b[1] - a[1]);
-        total = entries.reduce((s, [, n]) => s + n, 0);
-        labels = entries.map(e => e[0]);
-        counts = entries.map(e => e[1]);
-        pcts = counts.map(n => Math.round(n / total * 1000) / 10);
-    } else {
-        labels = reg.labels; pcts = reg.data; counts = reg.counts; total = counts.reduce((a, b) => a + b, 0);
-    }
 
-    const unit = { 'lol-worlds': 'Mundiales', 'fifa-wc': 'Copas del Mundo', 'cs2-majors': 'torneos tier 1' }[state.regional];
+    // Títulos por región dentro del rango de años elegido
+    const counter = {};
+    reg.by_year.filter(t => inRange(t.year)).forEach(t => { counter[t.region] = (counter[t.region] || 0) + 1; });
+    const entries = Object.entries(counter).sort((a, b) => b[1] - a[1]);
+    const labels = entries.map(e => e[0]);
+    const counts = entries.map(e => e[1]);
+    const total = counts.reduce((a, b) => a + b, 0);
+    const pcts = counts.map(n => Math.round(n / total * 1000) / 10);
+
+    // El eje llega al máximo de toda la historia, así las barras crecen al ampliar el rango
+    const allTimes = {};
+    reg.by_year.forEach(t => { allTimes[t.region] = (allTimes[t.region] || 0) + 1; });
+    const maxTitles = Math.max(1, ...Object.values(allTimes));
+
+    const unit = { 'lol-worlds': 'Mundiales', 'fifa-wc': 'Copas del Mundo', 'cs2-majors': 'torneos tier 1',
+                   'starcraft-2': 'WCS Global Finals' }[state.regional];
     if (!labels.length) {
         $('#regional-title').textContent = `${d.name} no tiene títulos entre ${rangeText()}`;
-    } else if (dated) {
-        $('#regional-title').textContent = `${labels[0]} ganó ${counts[0]} de ${total} ${unit} de ${SHORT[d.slug]} (${rangeText()})`;
     } else {
-        $('#regional-title').textContent = `${labels[0]} concentra el ${nf(pcts[0], 0)} % de los premios de ${SHORT[d.slug]}`;
+        $('#regional-title').textContent = `${labels[0]} ganó ${counts[0]} de ${total} ${unit} de ${SHORT[d.slug]} (${rangeText()})`;
     }
-    $('#regional-note').textContent = reg.note + (dated ? '' : '. Estos premios no tienen fecha, así que no se filtran por años.');
+    $('#regional-note').textContent = reg.note;
     $('#regional-source').innerHTML = 'Fuente: ' + reg.sources.map(s => `<code>${esc(s)}</code>`).join(' ');
 
     makeChart('regional', 'regionalChart', {
         type: 'bar',
-        data: { labels, datasets: [{ label: '% del total', data: pcts, backgroundColor: d.color, borderRadius: 4,
+        data: { labels, datasets: [{ label: 'Títulos', data: counts, backgroundColor: d.color, borderRadius: 4,
                                      borderSkipped: 'start', maxBarThickness: 26 }] },
         options: {
             indexAxis: 'y',
             plugins: { legend: { display: false },
                        tooltip: { callbacks: { label: c => {
-                           const n = counts[c.dataIndex];
-                           return ` ${nf(c.parsed.x, 1)} %  (${dated ? n + (n === 1 ? ' título' : ' títulos') : money(n) + ' USD'})`;
+                           const n = c.parsed.x;
+                           return ` ${n} ${n === 1 ? 'título' : 'títulos'} (${nf(pcts[c.dataIndex], 1)} % del rango)`;
                        } } } },
-            scales: { x: { max: 100, grid: { color: C.grid }, ticks: { callback: v => v + ' %' } },
+            scales: { x: { min: 0, max: maxTitles, grid: { color: C.grid }, ticks: { precision: 0 },
+                           title: { display: true, text: 'Títulos ganados', color: C.text2 } },
                       y: { grid: { display: false }, ticks: { color: C.text, font: { size: 13 } } } },
         },
     });
-    setTable('regional', ['Región', dated ? 'Títulos' : 'Premios (USD)', '% del total'],
-        labels.map((l, i) => [l, dated ? counts[i] : money(counts[i]), nf(pcts[i], 1) + ' %']), [1, 2]);
+    setTable('regional', ['Región', 'Títulos', '% del total'],
+        labels.map((l, i) => [l, counts[i], nf(pcts[i], 1) + ' %']), [1, 2]);
 }
 
 // ---------------------------------------------------------------- pestaña Paridad

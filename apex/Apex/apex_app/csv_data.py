@@ -289,6 +289,7 @@ def load_cs2():
 # StarCraft II
 # ---------------------------------------------------------------------------
 SC2_RACES = {'P': 'Protoss', 'T': 'Terran', 'Z': 'Zerg'}
+SC2_REGIONS = {'South Korea': 'Corea (KR)', 'Finland': 'Europa', 'Italy': 'Europa'}
 
 
 def load_sc2():
@@ -316,28 +317,24 @@ def load_sc2():
     scale = [(y, per_year[y]) for y in full]
     activity = sum(per_year[y] for y in full) / len(full) if full else 0
 
-    continents = country_continents()
-    earnings = Counter()
+    titles_by_year = []
+    for r in read_csv('starcraft 2', 'sc2_wcs_global_finals.csv'):
+        region = SC2_REGIONS.get(r['winner_country'], 'Otras')
+        titles_by_year.append((int(r['year']), region, r['winner']))
+    titles = Counter(region for _, region, _ in titles_by_year)
+
+    prizes = 0
     for r in read_csv('starcraft 2', 'highest_earning_players.csv'):
-        if r['Game'] != 'Starcraft II':
-            continue
-        code = r['CountryCode'].upper()
-        if code == 'KR':
-            region = 'Corea (KR)'
-        elif code in CIS:
-            region = 'CIS'
-        else:
-            region = CONTINENT_ES.get(continents.get(code), 'Otras')
-        earnings[region] += to_float(r['TotalUSDPrize'])
-    earnings = Counter({k: round(v) for k, v in earnings.items()})
+        if r['Game'] == 'Starcraft II':
+            prizes += to_float(r['TotalUSDPrize'])
     total_races = sum(races[r] for r in SC2_RACES)
     top_race = max(SC2_RACES, key=lambda r: races[r])
     return {
         'scale': scale,
         'activity': activity,
         'parity': {y: pct(d, t) for y, (d, t) in parity.items()},
-        'regional': regional_shares(earnings),
-        'titles_by_year': [],  # los premios del CSV no tienen fecha
+        'regional': regional_shares(titles),
+        'titles_by_year': titles_by_year,
         'details': {
             'partidas': [(str(y), per_year[y]) for y in years],
             'matchup': [(f'{exp}|{a}v{b}', pct(w, n)) for (exp, a, b), (w, n) in sorted(matchup.items())],
@@ -345,7 +342,7 @@ def load_sc2():
         },
         'kpis': [
             ('Partidas registradas', sum(per_year.values()), f'{years[0]}–{years[-1]}'),
-            ('Premios del top 100', sum(earnings.values()), 'USD'),
+            ('Premios del top 100', round(prizes), 'USD'),
             (f'Raza más jugada: {SC2_RACES[top_race]}', pct(races[top_race], total_races), '% de las partidas'),
             ('Año con más partidas', max(per_year.values()), f'en {max(per_year, key=per_year.get)}'),
         ],
@@ -389,8 +386,8 @@ NOTES = {
     'starcraft-2': {
         'scale': 'partidas registradas por año',
         'parity': 'series Bo3+ que llegaron al juego decisivo',
-        'regional': 'premios acumulados del top 100 de jugadores (USD)',
-        'sources': ['sc2-matches-history.csv', 'highest_earning_players.csv'],
+        'regional': 'WCS Global Finals ganadas por región del campeón',
+        'sources': ['sc2-matches-history.csv', 'sc2_wcs_global_finals.csv'],
     },
 }
 
