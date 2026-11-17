@@ -36,6 +36,17 @@ Los próximos días, basta con activar el entorno y correr `python manage.py run
   y las estadísticas de cada jugador. Para hacer manager a otro usuario, agrégalo al grupo `Manager` desde el admin.
 - **Usuario normal**: entra al dashboard.
 
+## Base de datos en AWS
+
+Sin archivo `.env` el proyecto usa SQLite (`db.sqlite3`, local). Para usar la base MySQL de AWS RDS:
+
+1. Copia `.env.example` como `.env` en esta carpeta y completa `DB_HOST` y `DB_PASSWORD`
+   (pídelos al equipo; el `.env` no se sube a GitHub).
+2. Pide que agreguen tu IP al grupo de seguridad `apex-mysql` en AWS, si no, no conecta.
+3. El laboratorio de AWS Academy tiene que estar encendido.
+
+La base en AWS ya tiene los datos cargados, así que no hace falta correr `populate_db.py` ni `seed_demo_users.py`.
+
 ## Datos
 
 Los CSV están en las carpetas `counter`, `fifa_dataset`, `lol_dataset` y `starcraft 2`, dos niveles por encima de esta carpeta. No cambies esa estructura.

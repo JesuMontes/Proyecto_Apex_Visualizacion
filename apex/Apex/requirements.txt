@@ -1,2 +1,3 @@
 Django==6.1.2
 tzdata
+mysqlclient==2.3.1
