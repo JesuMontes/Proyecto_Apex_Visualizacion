@@ -17,13 +17,15 @@ Including another URLconf
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from apex_app.admin import admin_site  # <-- Aquí está la importación que faltaba
-from apex_app.views import dashboard_view, api_chart_data, api_discipline, api_save_portfolio
+from apex_app.views import dashboard_view, api_chart_data, api_discipline, api_save_portfolio, after_login, manager_view
 
 urlpatterns = [
     path('admin/', admin_site.urls),
     path('', dashboard_view, name='dashboard'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('inicio/', after_login, name='after_login'),
+    path('manager/', manager_view, name='manager'),
     path('api/chart-data/', api_chart_data, name='api_chart_data'),
     path('api/discipline/<slug:slug>/', api_discipline, name='api_discipline'),
     path('api/portfolio/', api_save_portfolio, name='api_save_portfolio'),

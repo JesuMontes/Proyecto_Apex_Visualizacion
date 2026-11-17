@@ -27,5 +27,6 @@
 
 {% block userlinks %}
     <a href="/" class="to-site">Ver dashboard</a>
+    <a href="{% url 'manager' %}" class="to-site">Perfil manager</a>
     {{ block.super }}
 {% endblock %}

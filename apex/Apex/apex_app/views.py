@@ -2,12 +2,13 @@ import json
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from .models import Discipline, Investment
+from .models import Discipline, Investment, PlayerStat, TeamStat
 from .csv_data import RADAR_AXES, AXIS_NOTES, NOTES, sync_database
 
 BALANCE_FROM_YEAR = 2010  # era moderna: el rango de años parte aquí por defecto
@@ -17,8 +18,58 @@ CAPITAL_RANGE = (50_000, 10_000_000)
 @ensure_csrf_cookie
 def dashboard_view(request):
     disciplines = Discipline.objects.all()
-    context = {'disciplines': disciplines}
+    context = {'disciplines': disciplines, 'is_manager': is_manager(request.user)}
     return render(request, 'dashboard.html', context)
+
+
+def is_manager(user):
+    if not user.is_authenticated:
+        return False
+    return user.is_superuser or user.groups.filter(name='Manager').exists()
+
+
+@login_required
+def after_login(request):
+    if request.user.is_staff:
+        return redirect('/admin/')
+    if is_manager(request.user):
+        return redirect('manager')
+    return redirect('dashboard')
+
+
+@login_required
+def manager_view(request):
+    if not is_manager(request.user):
+        return redirect('dashboard')
+
+    slug = request.GET.get('disciplina', 'cs2-majors')
+    discipline = get_object_or_404(Discipline, slug=slug)
+
+    tournaments = (TeamStat.objects.filter(discipline=discipline)
+                   .values_list('tournament', flat=True).distinct().order_by('tournament'))
+    tournament = request.GET.get('torneo', '')
+    if tournament not in tournaments and tournaments:
+        tournament = tournaments[0]
+    teams = TeamStat.objects.filter(discipline=discipline, tournament=tournament)
+
+    search = request.GET.get('jugador', '')
+    players = PlayerStat.objects.filter(discipline=discipline)
+    if discipline.slug == 'fifa-wc':
+        players = players.order_by('-goals')
+    if search:
+        players = players.filter(player__icontains=search)
+
+    context = {
+        'disciplines': Discipline.objects.all(),
+        'discipline': discipline,
+        'tournaments': tournaments,
+        'tournament': tournament,
+        'teams': teams,
+        'players': players[:50],
+        'total_players': players.count(),
+        'search': search,
+    }
+    return render(request, 'manager.html', context)
 
 
 def api_chart_data(request):

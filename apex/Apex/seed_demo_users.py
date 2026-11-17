@@ -29,6 +29,7 @@ DEMO_USERS = [
 ]
 CAPITALS = [100_000, 250_000, 500_000, 750_000, 1_000_000, 2_000_000, 3_500_000, 5_000_000, 8_000_000]
 ADMIN_USERNAME = 'apex_admin'
+MANAGER_USERNAME = 'apex_manager'
 CREDENTIALS_FILE = 'credenciales_demo.txt'
 
 
@@ -48,6 +49,18 @@ def ensure_admin():
     User.objects.create_superuser(ADMIN_USERNAME, '', password, first_name='Admin', last_name='APEX')
     with open(CREDENTIALS_FILE, 'w', encoding='utf-8') as f:
         f.write(f'Administrador de prueba (solo desarrollo local)\nusuario: {ADMIN_USERNAME}\ncontraseña: {password}\n')
+    return CREDENTIALS_FILE
+
+
+def ensure_manager():
+    group, _ = Group.objects.get_or_create(name='Manager')
+    if User.objects.filter(username=MANAGER_USERNAME).exists():
+        return None
+    password = secrets.token_urlsafe(12)
+    user = User.objects.create_user(MANAGER_USERNAME, '', password, first_name='Manager', last_name='APEX')
+    user.groups.add(group)
+    with open(CREDENTIALS_FILE, 'a', encoding='utf-8') as f:
+        f.write(f'\nManager de prueba (solo desarrollo local)\nusuario: {MANAGER_USERNAME}\ncontraseña: {password}\n')
     return CREDENTIALS_FILE
 
 
@@ -90,6 +103,9 @@ def run():
     created = ensure_admin()
     if created:
         print(f'Administrador de prueba creado. Usuario y contraseña en {created}')
+    created = ensure_manager()
+    if created:
+        print(f'Manager de prueba creado. Usuario y contraseña en {created}')
 
 
 if __name__ == '__main__':

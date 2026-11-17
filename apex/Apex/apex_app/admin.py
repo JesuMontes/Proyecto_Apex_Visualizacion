@@ -13,8 +13,9 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 
 from .csv_data import RADAR_AXES, csv_files, sync_database
-from .models import (CompetitiveBalanceRecord, Discipline, GrowthMetric, Investment, RadarScore, RegionalTitle,
-                     SeriesPoint, SyncLog)
+from .manager_data import sync_manager_data
+from .models import (CompetitiveBalanceRecord, Discipline, GrowthMetric, Investment, PlayerStat, RadarScore,
+                     RegionalTitle, SeriesPoint, SyncLog, TeamStat)
 
 ACTIVE_DAYS = 30
 SHAPES = {'fifa-wc': 'circle', 'lol-worlds': 'triangle', 'cs2-majors': 'rect', 'starcraft-2': 'rectRot'}
@@ -53,6 +54,7 @@ class ApexAdminSite(admin.AdminSite):
     def _sync(self, request):
         try:
             rows = sync_database()
+            sync_manager_data()
         except Exception as exc:  # el error queda en SyncLog y se muestra al usuario
             messages.error(request, f'No se pudo sincronizar: {exc}')
         else:
@@ -336,6 +338,18 @@ class InvestmentAdmin(admin.ModelAdmin):
                                  for slug, share in sorted(obj.allocation.items(), key=lambda kv: -kv[1])))
 
 
+class TeamStatAdmin(admin.ModelAdmin):
+    list_display = ('team', 'tournament', 'discipline', 'played', 'won', 'drawn', 'lost')
+    list_filter = ('discipline',)
+    search_fields = ('team', 'tournament')
+
+
+class PlayerStatAdmin(admin.ModelAdmin):
+    list_display = ('player', 'discipline', 'team', 'country', 'played', 'won')
+    list_filter = ('discipline',)
+    search_fields = ('player', 'team')
+
+
 # Registrar modelos en el sitio de administración customizado
 admin_site.register(User, CustomUserAdmin)
 admin_site.register(Group, GroupAdmin)
@@ -347,3 +361,5 @@ admin_site.register(RadarScore, RadarScoreAdmin)
 admin_site.register(RegionalTitle, RegionalTitleAdmin)
 admin_site.register(CompetitiveBalanceRecord, CompetitiveBalanceRecordAdmin)
 admin_site.register(SeriesPoint, SeriesPointAdmin)
+admin_site.register(TeamStat, TeamStatAdmin)
+admin_site.register(PlayerStat, PlayerStatAdmin)

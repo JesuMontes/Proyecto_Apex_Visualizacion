@@ -1,0 +1,173 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Perfil manager | APEX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=4">
+    <style>
+        .filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+        .filters input { padding: 10px 12px; border-radius: var(--r-ctrl); border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 14px var(--font); }
+        .empty { color: var(--text-2); font-size: 14px; padding: 12px 0; }
+        .table-scroll { max-height: 520px; overflow: auto; }
+        .topbar .account { margin-left: auto; }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="logo" href="/"><span class="logo-hex" aria-hidden="true">⬡</span><span class="display">APEX</span><span class="logo-sub">Perfil manager</span></a>
+        <div class="account">
+            <span class="account-name">{{ user.get_full_name|default:user.username }}</span>
+            <a class="btn btn-sm btn-ghost" href="/">Dashboard</a>
+            {% if user.is_staff %}<a class="btn btn-sm btn-ghost" href="/admin/">Admin</a>{% endif %}
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">Cerrar sesión</button></form>
+        </div>
+    </div>
+</header>
+
+<main class="wrap">
+    <div class="section-head">
+        <h1 class="display">Equipos y jugadores</h1>
+        <p class="lede">Resultados de cada equipo por torneo y estadísticas de cada jugador, calculados desde los CSV.</p>
+    </div>
+
+    <form method="get" class="filters">
+        <label class="select"><span class="sr-only">Disciplina</span>
+            <select name="disciplina" onchange="this.form.submit()">
+                {% for d in disciplines %}
+                    <option value="{{ d.slug }}" {% if d == discipline %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </form>
+
+    <article class="card" style="margin-bottom: 16px">
+        <div class="card-head">
+            <div>
+                <h2>Equipos por torneo</h2>
+                <p class="card-sub">
+                    {% if discipline.slug == 'fifa-wc' %}Solo los partidos que trae el CSV de cada Mundial, no todos.
+                    {% else %}Partidos o series jugadas en el torneo elegido.{% endif %}
+                </p>
+            </div>
+            {% if tournaments %}
+            <form method="get" class="filters" style="margin: 0">
+                <input type="hidden" name="disciplina" value="{{ discipline.slug }}">
+                <label class="select"><span class="sr-only">Torneo</span>
+                    <select name="torneo" onchange="this.form.submit()">
+                        {% for t in tournaments %}
+                            <option value="{{ t }}" {% if t == tournament %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if teams %}
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th class="num">Jugados</th>
+                            <th class="num">Ganados</th>
+                            {% if discipline.slug == 'fifa-wc' %}<th class="num">Empatados</th>{% endif %}
+                            <th class="num">Perdidos</th>
+                            <th class="num">% victorias</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in teams %}
+                        <tr>
+                            <td>{{ t.team }}</td>
+                            <td class="num">{{ t.played }}</td>
+                            <td class="num">{{ t.won }}</td>
+                            {% if discipline.slug == 'fifa-wc' %}<td class="num">{{ t.drawn }}</td>{% endif %}
+                            <td class="num">{{ t.lost }}</td>
+                            <td class="num">{{ t.win_rate }} %</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="empty">Los datos de {{ discipline.name }} no traen resultados de equipos por torneo.</p>
+        {% endif %}
+    </article>
+
+    <article class="card">
+        <div class="card-head">
+            <div>
+                <h2>Estadísticas de jugadores</h2>
+                <p class="card-sub">
+                    {% if discipline.slug == 'cs2-majors' %}Por mapa jugado en torneos tier 1.
+                    {% elif discipline.slug == 'fifa-wc' %}Goleadores de cada Mundial.
+                    {% elif discipline.slug == 'starcraft-2' %}Jugadores con 50 o más partidas.{% endif %}
+                    Mostrando {{ players|length }} de {{ total_players }}.
+                </p>
+            </div>
+            <form method="get" class="filters" style="margin: 0">
+                <input type="hidden" name="disciplina" value="{{ discipline.slug }}">
+                <input type="hidden" name="torneo" value="{{ tournament }}">
+                <input type="search" name="jugador" value="{{ search }}" placeholder="Buscar jugador">
+                <button class="btn btn-sm" type="submit">Buscar</button>
+            </form>
+        </div>
+
+        {% if players %}
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Jugador</th>
+                            {% if discipline.slug == 'cs2-majors' %}
+                                <th>Equipo</th><th>País</th>
+                                <th class="num">Mapas</th><th class="num">% victorias</th>
+                                <th class="num">Kills</th><th class="num">Muertes</th><th class="num">K/D</th><th class="num">ADR</th>
+                            {% elif discipline.slug == 'fifa-wc' %}
+                                <th>País</th><th>Posición</th>
+                                <th class="num">Partidos</th><th class="num">Goles</th><th class="num">Asistencias</th>
+                            {% else %}
+                                <th>Raza</th>
+                                <th class="num">Partidas</th><th class="num">Ganadas</th><th class="num">% victorias</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in players %}
+                        <tr>
+                            <td>{{ p.player }}</td>
+                            {% if discipline.slug == 'cs2-majors' %}
+                                <td>{{ p.team }}</td><td>{{ p.country|default:"—" }}</td>
+                                <td class="num">{{ p.played }}</td><td class="num">{{ p.win_rate }} %</td>
+                                <td class="num">{{ p.kills }}</td><td class="num">{{ p.deaths }}</td>
+                                <td class="num">{{ p.kd|default:"—" }}</td><td class="num">{{ p.adr }}</td>
+                            {% elif discipline.slug == 'fifa-wc' %}
+                                <td>{{ p.country }}</td><td>{{ p.position }}</td>
+                                <td class="num">{{ p.played }}</td><td class="num">{{ p.goals }}</td><td class="num">{{ p.assists }}</td>
+                            {% else %}
+                                <td>{{ p.position }}</td>
+                                <td class="num">{{ p.played }}</td><td class="num">{{ p.won }}</td><td class="num">{{ p.win_rate }} %</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% elif search %}
+            <p class="empty">No hay jugadores que coincidan con «{{ search }}».</p>
+        {% else %}
+            <p class="empty">Los datos de {{ discipline.name }} no traen estadísticas por jugador.</p>
+        {% endif %}
+    </article>
+</main>
+
+</body>
+</html>

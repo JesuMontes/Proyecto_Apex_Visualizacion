@@ -26,6 +26,7 @@
         <div class="account">
             {% if user.is_authenticated %}
                 <span class="account-name">{{ user.get_full_name|default:user.username }}</span>
+                {% if is_manager %}<a class="btn btn-sm btn-ghost" href="{% url 'manager' %}">Manager</a>{% endif %}
                 {% if user.is_staff %}<a class="btn btn-sm btn-ghost" href="/admin/">Admin</a>{% endif %}
                 <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">Cerrar sesión</button></form>
             {% else %}

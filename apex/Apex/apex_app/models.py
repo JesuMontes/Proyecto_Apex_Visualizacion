@@ -123,3 +123,59 @@ class Investment(models.Model):
 
     def __str__(self):
         return f"{self.user} · ${self.capital:,.0f} ({self.get_risk_profile_display()})"
+
+
+class TeamStat(models.Model):
+    discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE, related_name='team_stats')
+    tournament = models.CharField('torneo', max_length=150)
+    team = models.CharField('equipo', max_length=100)
+    played = models.PositiveIntegerField('partidos', default=0)
+    won = models.PositiveIntegerField('ganados', default=0)
+    drawn = models.PositiveIntegerField('empatados', default=0)
+    lost = models.PositiveIntegerField('perdidos', default=0)
+
+    class Meta:
+        ordering = ['-won', 'lost']
+        verbose_name = 'estadística de equipo'
+        verbose_name_plural = 'estadísticas de equipos'
+
+    def __str__(self):
+        return f"{self.team} - {self.tournament}"
+
+    def win_rate(self):
+        if self.played == 0:
+            return 0
+        return round(self.won * 100 / self.played, 1)
+
+
+class PlayerStat(models.Model):
+    discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE, related_name='player_stats')
+    player = models.CharField('jugador', max_length=100)
+    country = models.CharField('país', max_length=60, blank=True)
+    team = models.CharField('equipo', max_length=100, blank=True)
+    position = models.CharField('posición o raza', max_length=30, blank=True)
+    played = models.PositiveIntegerField('partidos', default=0)
+    won = models.PositiveIntegerField('ganados', default=0)
+    kills = models.PositiveIntegerField(null=True, blank=True)
+    deaths = models.PositiveIntegerField('muertes', null=True, blank=True)
+    assists = models.PositiveIntegerField('asistencias', null=True, blank=True)
+    adr = models.FloatField('ADR', null=True, blank=True)
+    goals = models.PositiveIntegerField('goles', null=True, blank=True)
+
+    class Meta:
+        ordering = ['-played']
+        verbose_name = 'estadística de jugador'
+        verbose_name_plural = 'estadísticas de jugadores'
+
+    def __str__(self):
+        return self.player
+
+    def win_rate(self):
+        if self.played == 0:
+            return 0
+        return round(self.won * 100 / self.played, 1)
+
+    def kd(self):
+        if not self.deaths:
+            return None
+        return round(self.kills / self.deaths, 2)

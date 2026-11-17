@@ -123,7 +123,7 @@ STATIC_URL = 'static/'
 APEX_DATA_DIR = BASE_DIR.parent.parent
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_REDIRECT_URL = 'after_login'
 LOGOUT_REDIRECT_URL = 'dashboard'
 
 
