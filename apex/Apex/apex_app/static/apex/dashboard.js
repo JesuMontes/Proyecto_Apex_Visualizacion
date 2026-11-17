@@ -407,6 +407,38 @@ const DETAIL = {
     },
 };
 
+// Texto que acompaña a cada gráfico de la ficha
+const ABOUT = {
+    'lol-worlds': {
+        scale: 'Cuánto dinero reparte el Mundial cada año. Es la medida de tamaño que usamos para calcular el crecimiento y el riesgo de LoL.',
+        a: 'Partidas más cortas indican un juego más agresivo; más largas, un estilo más cauteloso. Cambios bruscos suelen venir de parches del juego.',
+        b: 'Más kills por partida significa más acción en pantalla, uno de los motivos por los que el público se queda mirando.',
+    },
+    'fifa-wc': {
+        scale: 'Personas que fueron a los estadios en cada Mundial. Mide el tamaño del evento y es la base del crecimiento y el riesgo de FIFA.',
+        a: 'Cuántos goles hay en promedio por partido. Un torneo con más goles suele ser más atractivo para el público y los auspiciadores.',
+        b: 'Cantidad de selecciones en la fase final. Cada ampliación suma partidos, países y audiencia, es decir, más mercado.',
+    },
+    'cs2-majors': {
+        scale: 'Cuántas series de primer nivel se juegan cada mes. Mide la actividad del circuito: más series son más contenido para transmitir.',
+        a: 'Qué mapas se repiten más en el circuito. Un grupo de mapas variado mantiene el juego fresco para equipos y espectadores.',
+        b: 'Mapas que terminaron en tiempo extra. Más tiempo extra significa partidas más parejas y con más tensión.',
+    },
+    'starcraft-2': {
+        scale: 'Partidas registradas por año en el historial. Mide cuánta actividad competitiva tiene la escena.',
+        a: 'Balance entre razas: azul si la raza de la fila gana más, rojo si pierde más. Valores cerca de 50 % significan un juego equilibrado.',
+        b: 'Qué parte de las partidas se juega con cada raza. Un reparto parejo indica que ninguna raza domina el juego.',
+    },
+};
+
+// Dato clave: el valor más alto de la serie dentro del rango elegido
+function keyFact(pts, fmt, isYear, title) {
+    if (!pts.length) return `Sin datos entre ${rangeText()}`;
+    let top = pts[0];
+    pts.forEach(p => { if (p.value > top.value) top = p; });
+    return isYear ? `Máximo de ${title[0].toLowerCase() + title.slice(1)}: ${fmt(top.value)}, en ${top.label}` : `${top.label} lidera con ${fmt(top.value)}`;
+}
+
 async function loadDetail(slug) {
     if (!state.details[slug]) {
         const res = await fetch(`/api/discipline/${slug}/`);
@@ -442,6 +474,8 @@ async function renderDetail() {
     // Escala en el tiempo (filtrada por años)
     const scalePts = byYear(s[cfg.scale.series]);
     $('#scale-title').textContent = cfg.scale.title;
+    $('#scale-about').textContent = ABOUT[slug].scale;
+    $('#scale-fact').textContent = keyFact(scalePts, v => cfg.scale.fmt(v) + ' ' + cfg.scale.unit, true, cfg.scale.title);
     $('#scale-sub').textContent = `${scalePts.length} ${slug === 'cs2-majors' ? 'meses con datos' : 'registros'} en ${rangeText()}`;
     makeChart('scale', 'scaleChart', {
         type: 'bar',
@@ -463,6 +497,7 @@ async function renderDetail() {
 function renderDetailPanel(key, cfg, s, d) {
     $(`#${key}-title`).textContent = cfg.title;
     $(`#${key}-sub`).textContent = cfg.sub + (cfg.yearly ? ` (${rangeText()})` : '');
+    $(`#${key}-about`).textContent = ABOUT[d.slug][key === 'detailA' ? 'a' : 'b'];
     const box = document.querySelector(`[data-card="${key}"] .chart-box`);
     const heat = $('#heatmap'), picker = $('#expansion-picker');
     if (key === 'detailA') { heat.hidden = cfg.type !== 'heatmap'; picker.hidden = cfg.type !== 'heatmap'; }
@@ -470,6 +505,7 @@ function renderDetailPanel(key, cfg, s, d) {
     if (cfg.type === 'heatmap') { if (charts[key]) { charts[key].destroy(); delete charts[key]; } renderHeatmap(s.matchup); return; }
 
     const pts = cfg.yearly ? byYear(s[cfg.series]) : s[cfg.series];
+    $(`#${key}-fact`).textContent = keyFact(pts, cfg.fmt, cfg.yearly, cfg.title);
     const canvasId = key + 'Chart';
     const isBar = cfg.type === 'hbar';
     makeChart(key, canvasId, {
@@ -517,17 +553,20 @@ function renderHeatmap(points) {
     points.forEach(p => { const [exp, m] = p.label.split('|'); if (exp === state.expansion) val[m] = p.value; });
     let html = '<div></div>' + Object.values(races).map(r => `<div class="hm-head">vs ${r}</div>`).join('');
     const rows = [];
+    let worst = null;  // el cruce más lejos del 50 %
     Object.entries(races).forEach(([a, an]) => {
         html += `<div class="hm-row">${an}</div>`;
         Object.keys(races).forEach(b => {
             if (a === b) { html += '<div class="hm-cell hm-mirror">espejo</div>'; return; }
             const v = val[`${a}v${b}`];
+            if (!worst || Math.abs(v - 50) > Math.abs(worst.v - 50)) worst = { name: `${an} vs ${races[b]}`, v };
             rows.push([`${an} vs ${races[b]}`, nf(v, 1) + ' %']);
             html += `<div class="hm-cell" style="background:${heatColor(v)}" title="${an} vs ${races[b]}: ${nf(v, 1)} % de victorias">${nf(v, 1)} %<small>${v >= 50 ? 'gana' : 'pierde'}</small></div>`;
         });
     });
     html += `<div class="hm-legend"><span>Pierde más</span><span class="hm-scale" aria-hidden="true"></span><span>Gana más</span><span>Expansión: ${names[state.expansion]}</span></div>`;
     $('#heatmap').innerHTML = html;
+    $('#detailA-fact').textContent = worst ? `El cruce más desbalanceado es ${worst.name}, con ${nf(worst.v, 1)} % de victorias` : '';
     setTable('detailA', ['Enfrentamiento', '% de victorias'], rows, [1]);
 }
 

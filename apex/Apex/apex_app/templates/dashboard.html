@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
-    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=6">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -125,22 +125,33 @@
 
         <div class="stat-row" id="detail-kpis"></div>
 
-        <article class="card" data-card="scale">
-            <div class="card-head">
-                <div>
-                    <h2 id="scale-title">Escala en el tiempo</h2>
-                    <p class="card-sub" id="scale-sub"></p>
-                </div>
-                <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+        <div class="story">
+            <div class="story-text">
+                <span class="story-num">01 · Tamaño del evento</span>
+                <h2 id="scale-title">Escala en el tiempo</h2>
+                <p class="story-about" id="scale-about"></p>
+                <div class="story-fact"><span>Dato clave</span><strong id="scale-fact"></strong></div>
             </div>
-            <div class="chart-box h-scale"><canvas id="scaleChart" role="img" aria-label="Escala del evento en el tiempo"></canvas></div>
-            <div class="table-view" hidden></div>
-        </article>
+            <article class="card" data-card="scale">
+                <div class="card-head">
+                    <p class="card-sub" id="scale-sub"></p>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+                <div class="chart-box h-scale"><canvas id="scaleChart" role="img" aria-label="Escala del evento en el tiempo"></canvas></div>
+                <div class="table-view" hidden></div>
+            </article>
+        </div>
 
-        <div class="grid grid-2">
+        <div class="story reverse">
+            <div class="story-text">
+                <span class="story-num">02 · Cómo se juega</span>
+                <h2 id="detailA-title"></h2>
+                <p class="story-about" id="detailA-about"></p>
+                <div class="story-fact"><span>Dato clave</span><strong id="detailA-fact"></strong></div>
+            </div>
             <article class="card" data-card="detailA">
                 <div class="card-head">
-                    <div><h2 id="detailA-title"></h2><p class="card-sub" id="detailA-sub"></p></div>
+                    <p class="card-sub" id="detailA-sub"></p>
                     <div class="card-tools">
                         <div class="segmented" id="expansion-picker" role="group" aria-label="Expansión de StarCraft II" hidden></div>
                         <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
@@ -150,9 +161,18 @@
                 <div class="heatmap" id="heatmap" hidden></div>
                 <div class="table-view" hidden></div>
             </article>
+        </div>
+
+        <div class="story">
+            <div class="story-text">
+                <span class="story-num">03 · Competencia y espectáculo</span>
+                <h2 id="detailB-title"></h2>
+                <p class="story-about" id="detailB-about"></p>
+                <div class="story-fact"><span>Dato clave</span><strong id="detailB-fact"></strong></div>
+            </div>
             <article class="card" data-card="detailB">
                 <div class="card-head">
-                    <div><h2 id="detailB-title"></h2><p class="card-sub" id="detailB-sub"></p></div>
+                    <p class="card-sub" id="detailB-sub"></p>
                     <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
                 </div>
                 <div class="chart-box h-detail"><canvas id="detailBChart" role="img"></canvas></div>
@@ -255,6 +275,6 @@
 
 </main>
 
-<script src="{% static 'apex/dashboard.js' %}?v=6"></script>
+<script src="{% static 'apex/dashboard.js' %}?v=7"></script>
 </body>
 </html>
