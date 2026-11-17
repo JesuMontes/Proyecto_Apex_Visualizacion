@@ -148,7 +148,11 @@ function setupChartDefaults() {
     Chart.defaults.font.size = 12;
     Chart.defaults.borderColor = C.grid;
     Chart.defaults.maintainAspectRatio = false;
-    Chart.defaults.animation = reduceMotion ? false : { duration: 350 };
+    if (reduceMotion) {
+        Chart.defaults.animation = false;
+    } else {
+        Chart.defaults.animation.duration = 350;
+    }
     const tt = Chart.defaults.plugins.tooltip;
     Object.assign(tt, { backgroundColor: '#0e1015', borderColor: C.line, borderWidth: 1, padding: 10, titleColor: C.text,
                         bodyColor: C.text, titleFont: { weight: '650' }, usePointStyle: true, boxPadding: 4 });
