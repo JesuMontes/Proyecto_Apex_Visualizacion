@@ -1,0 +1,263 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>APEX | Capital & Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=4">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="logo" href="/"><span class="logo-hex" aria-hidden="true">⬡</span><span class="display">APEX</span><span class="logo-sub">Capital & Intelligence</span></a>
+        <nav class="tabs" role="tablist" aria-label="Secciones">
+            <button class="tab active" role="tab" aria-selected="true" data-tab="panorama">Panorama</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="paridad">Paridad</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="disciplinas">Disciplinas</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="comparar">Comparar</button>
+            <button class="tab" role="tab" aria-selected="false" data-tab="simulador">Simulador</button>
+        </nav>
+        <div class="account">
+            {% if user.is_authenticated %}
+                <span class="account-name">{{ user.get_full_name|default:user.username }}</span>
+                {% if user.is_staff %}<a class="btn btn-sm btn-ghost" href="/admin/">Admin</a>{% endif %}
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">Cerrar sesión</button></form>
+            {% else %}
+                <a class="btn btn-sm" href="{% url 'login' %}">Iniciar sesión</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MARCADOR: resumen de las 4 disciplinas + filtro global -->
+    <div class="scoreboard" aria-label="Filtros globales">
+        <div class="scoreboard-inner">
+            <div class="teams" id="teams" role="group" aria-label="Disciplinas visibles"></div>
+            <div class="year-filter">
+                <div class="year-head"><span>Años</span><output id="year-label">–</output></div>
+                <div class="dual-range">
+                    <div class="dual-track"><div class="dual-fill" id="year-fill"></div></div>
+                    <input type="range" id="year-from" aria-label="Año inicial">
+                    <input type="range" id="year-to" aria-label="Año final">
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="wrap">
+
+    <!-- PANORAMA -->
+    <section id="tab-panorama" class="panel active" role="tabpanel">
+        <div class="section-head">
+            <h1 class="display" id="panorama-title">Cuatro mercados, cinco dimensiones</h1>
+            <p class="lede">Cada eje se calcula desde los CSV y se escala entre las cuatro disciplinas: 20 es la más baja y 100 la más alta. El radar usa toda la historia disponible.</p>
+        </div>
+
+        <div class="grid grid-radar">
+            <article class="card" data-card="radar">
+                <div class="card-head">
+                    <h2>Perfil de riesgo y crecimiento</h2>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+                <div class="chart-box h-radar"><canvas id="radarChart" aria-label="Radar de las cinco dimensiones por disciplina" role="img"></canvas></div>
+                <div class="table-view" hidden></div>
+            </article>
+            <article class="card">
+                <h2>Cómo se mide cada eje</h2>
+                <dl class="axis-list" id="axis-list"></dl>
+            </article>
+        </div>
+
+        <article class="card" data-card="regional">
+            <div class="card-head">
+                <div>
+                    <h2 id="regional-title">Poder regional</h2>
+                    <p class="card-sub" id="regional-note"></p>
+                </div>
+                <div class="card-tools">
+                    <div class="segmented" id="regional-picker" role="group" aria-label="Disciplina del gráfico regional"></div>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+            </div>
+            <div class="chart-box h-bar"><canvas id="regionalChart" role="img" aria-label="Porcentaje de títulos por región"></canvas></div>
+            <div class="table-view" hidden></div>
+            <p class="source" id="regional-source"></p>
+        </article>
+    </section>
+
+    <!-- PARIDAD -->
+    <section id="tab-paridad" class="panel" role="tabpanel">
+        <div class="section-head">
+            <h1 class="display" id="parity-title">Paridad competitiva</h1>
+            <p class="lede">El índice de paridad de cada año es el porcentaje de enfrentamientos que se definieron al límite. Más alto significa resultados menos previsibles.</p>
+        </div>
+
+        <div class="stat-row" id="parity-stats"></div>
+
+        <article class="card" data-card="parity">
+            <div class="card-head">
+                <h2>Índice de paridad por año</h2>
+                <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+            </div>
+            <div class="chart-box h-line"><canvas id="lineChart" role="img" aria-label="Índice de paridad por año y disciplina"></canvas></div>
+            <div class="table-view" hidden></div>
+            <ul class="defs" id="parity-defs"></ul>
+            <p class="source">Los años con pocas series, como las eliminatorias de un solo Mundial de LoL, muestran saltos grandes porque cada serie pesa mucho en el porcentaje.</p>
+        </article>
+    </section>
+
+    <!-- DISCIPLINAS -->
+    <section id="tab-disciplinas" class="panel" role="tabpanel">
+        <div class="section-head with-picker">
+            <div>
+                <h1 class="display" id="detail-title">Ficha por disciplina</h1>
+                <p class="lede" id="detail-lede"></p>
+            </div>
+            <div class="segmented" id="detail-picker" role="group" aria-label="Disciplina de la ficha"></div>
+        </div>
+
+        <div class="stat-row" id="detail-kpis"></div>
+
+        <article class="card" data-card="scale">
+            <div class="card-head">
+                <div>
+                    <h2 id="scale-title">Escala en el tiempo</h2>
+                    <p class="card-sub" id="scale-sub"></p>
+                </div>
+                <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+            </div>
+            <div class="chart-box h-scale"><canvas id="scaleChart" role="img" aria-label="Escala del evento en el tiempo"></canvas></div>
+            <div class="table-view" hidden></div>
+        </article>
+
+        <div class="grid grid-2">
+            <article class="card" data-card="detailA">
+                <div class="card-head">
+                    <div><h2 id="detailA-title"></h2><p class="card-sub" id="detailA-sub"></p></div>
+                    <div class="card-tools">
+                        <div class="segmented" id="expansion-picker" role="group" aria-label="Expansión de StarCraft II" hidden></div>
+                        <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                    </div>
+                </div>
+                <div class="chart-box h-detail" id="detailA-box"><canvas id="detailAChart" role="img"></canvas></div>
+                <div class="heatmap" id="heatmap" hidden></div>
+                <div class="table-view" hidden></div>
+            </article>
+            <article class="card" data-card="detailB">
+                <div class="card-head">
+                    <div><h2 id="detailB-title"></h2><p class="card-sub" id="detailB-sub"></p></div>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+                <div class="chart-box h-detail"><canvas id="detailBChart" role="img"></canvas></div>
+                <div class="table-view" hidden></div>
+            </article>
+        </div>
+        <p class="source" id="detail-source"></p>
+    </section>
+
+    <!-- COMPARAR -->
+    <section id="tab-comparar" class="panel" role="tabpanel">
+        <div class="section-head with-picker">
+            <div>
+                <h1 class="display" id="compare-title">Cara a cara</h1>
+                <p class="lede">Elige dos disciplinas para comparar sus cinco dimensiones, su paridad en el rango de años y sus métricas clave.</p>
+            </div>
+            <div class="versus">
+                <label class="select"><span class="sr-only">Disciplina A</span><select id="cmp-a"></select></label>
+                <span class="vs display" aria-hidden="true">vs</span>
+                <label class="select"><span class="sr-only">Disciplina B</span><select id="cmp-b"></select></label>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <article class="card" data-card="butterfly">
+                <div class="card-head">
+                    <h2>Dimensiones lado a lado</h2>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+                <div class="chart-box h-detail"><canvas id="butterflyChart" role="img" aria-label="Comparación de las cinco dimensiones"></canvas></div>
+                <div class="table-view" hidden></div>
+            </article>
+            <article class="card">
+                <h2>Quién gana en cada métrica</h2>
+                <div class="h2h" id="h2h"></div>
+            </article>
+        </div>
+
+        <article class="card" data-card="cmpLine">
+            <div class="card-head">
+                <h2 id="cmp-line-title">Paridad en el tiempo</h2>
+                <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+            </div>
+            <div class="chart-box h-scale"><canvas id="cmpLineChart" role="img" aria-label="Paridad de las dos disciplinas por año"></canvas></div>
+            <div class="table-view" hidden></div>
+        </article>
+    </section>
+
+    <!-- SIMULADOR -->
+    <section id="tab-simulador" class="panel" role="tabpanel">
+        <div class="section-head">
+            <h1 class="display">Simulador de portafolio</h1>
+            <p class="lede">Reparte un capital entre las disciplinas visibles según tu tolerancia al riesgo. La proyección usa la tendencia histórica de cada una.</p>
+        </div>
+
+        <div class="grid grid-sim">
+            <article class="card">
+                <h2>Capital y riesgo</h2>
+                <div class="field">
+                    <label for="capital-slider">Capital de inversión</label>
+                    <div class="amount display" id="amount-display">$500.000</div>
+                    <input type="range" id="capital-slider" class="range" min="50000" max="10000000" step="50000" value="500000">
+                    <div class="range-ends"><span>$50 mil</span><span>$10 millones</span></div>
+                </div>
+                <div class="field">
+                    <span class="field-label" id="risk-label">Tolerancia al riesgo</span>
+                    <div class="segmented segmented-fill" id="risk-select" role="radiogroup" aria-labelledby="risk-label">
+                        <button role="radio" aria-checked="false" data-risk="conservador">Conservador</button>
+                        <button role="radio" aria-checked="true" data-risk="balanceado" class="active">Balanceado</button>
+                        <button role="radio" aria-checked="false" data-risk="agresivo">Agresivo</button>
+                    </div>
+                </div>
+                <div class="stat-row stat-row-3">
+                    <div class="stat"><div class="stat-label">Retorno anual</div><div class="stat-value" id="kpi-return">–</div></div>
+                    <div class="stat"><div class="stat-label">Ganancia a 1 año</div><div class="stat-value" id="kpi-gain">–</div></div>
+                    <div class="stat"><div class="stat-label">Volatilidad</div><div class="stat-value" id="kpi-vol">–</div></div>
+                </div>
+                <div class="save-row">
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-primary" id="save-portfolio">Guardar portafolio</button>
+                    {% else %}
+                        <a class="btn" href="{% url 'login' %}?next=/%23simulador">Inicia sesión para guardar tu portafolio</a>
+                    {% endif %}
+                    <span class="save-msg" id="save-msg" role="status" aria-live="polite"></span>
+                </div>
+                <p class="fineprint">Con poco capital el portafolio se concentra en las disciplinas que mejor calzan con tu perfil; con más capital se diversifica. Es un ejercicio académico, no una recomendación financiera.</p>
+            </article>
+
+            <article class="card" data-card="portfolio">
+                <div class="card-head">
+                    <h2>Distribución recomendada</h2>
+                    <button class="btn btn-sm btn-ghost table-toggle" aria-expanded="false">Ver tabla</button>
+                </div>
+                <div class="chart-box h-dona"><canvas id="doughnutChart" role="img" aria-label="Distribución del capital por disciplina"></canvas></div>
+                <div class="table-view" hidden></div>
+                <ul class="alloc" id="alloc-list"></ul>
+            </article>
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <p>Datos: CSV de League of Legends Worlds, FIFA World Cup, Counter-Strike 2 y StarCraft II. Proyecto del curso de Visualización de Datos.</p>
+</footer>
+
+<script src="{% static 'apex/dashboard.js' %}?v=4"></script>
+</body>
+</html>

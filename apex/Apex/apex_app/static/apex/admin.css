@@ -1,0 +1,127 @@
+/* APEX · panel de admin. Re-tema el admin de Django mediante sus propias variables CSS,
+   así listas, formularios, filtros y mensajes heredan la identidad sin !important. */
+:root, html[data-theme="light"], html[data-theme="dark"] {
+    --primary: var(--surface-2);
+    --secondary: var(--surface);
+    --accent: var(--gold);
+    --primary-fg: var(--text);
+    --body-fg: var(--text);
+    --body-bg: var(--bg);
+    --body-quiet-color: var(--text-2);
+    --body-medium-color: var(--text);
+    --body-loud-color: #fff;
+    --header-color: var(--text);
+    --header-branding-color: var(--text);
+    --header-bg: var(--bg);
+    --header-link-color: var(--text);
+    --breadcrumbs-fg: var(--text-2);
+    --breadcrumbs-link-fg: var(--text);
+    --breadcrumbs-bg: var(--bg);
+    --link-fg: var(--gold);
+    --link-hover-color: #ffc46b;
+    --link-selected-fg: var(--gold);
+    --hairline-color: var(--grid);
+    --border-color: var(--line);
+    --error-fg: var(--bad-ink);
+    --message-debug-bg: var(--surface-2);
+    --message-info-bg: #1c2b45;
+    --message-success-bg: #12301c;
+    --message-warning-bg: #3a2c0c;
+    --message-error-bg: #3a1414;
+    --darkened-bg: var(--surface);
+    --selected-bg: var(--surface-2);
+    --selected-row: rgba(245, 165, 36, 0.10);
+    --button-fg: var(--gold-ink);
+    --button-bg: var(--gold);
+    --button-hover-bg: #ffb73d;
+    --default-button-bg: var(--gold);
+    --default-button-hover-bg: #ffb73d;
+    --close-button-bg: var(--surface-3);
+    --close-button-hover-bg: #3a4050;
+    --delete-button-bg: var(--bad);
+    --delete-button-hover-bg: #b32e2e;
+    --object-tools-fg: var(--text);
+    --object-tools-bg: var(--surface-3);
+    --object-tools-hover-bg: #3a4050;
+    --font-family-primary: var(--font);
+    color-scheme: dark;
+}
+
+body { font-size: 14px; }
+.theme-toggle { display: none !important; }
+
+/* Encabezado */
+#header { border-bottom: 1px solid var(--line); padding: 12px 32px; }
+#branding h1 { display: flex; align-items: baseline; gap: 10px; }
+#branding a { color: var(--text); text-decoration: none; display: flex; align-items: baseline; gap: 8px; }
+.brand-hex { color: var(--gold); }
+.brand-name { font-size: 24px; }
+.brand-sub { color: var(--text-2); font-size: 14px; font-weight: 500; }
+.brand-tag { font-size: 12px; font-weight: 600; color: var(--gold); border: 1px solid rgba(245, 165, 36, .4); background: var(--gold-soft); padding: 2px 8px; border-radius: 999px; }
+#user-tools, #user-tools a, #logout-form button { font-size: 13px; text-transform: none; letter-spacing: 0; }
+#user-tools a.to-site { background: var(--gold); color: var(--gold-ink); padding: 6px 12px; border-radius: var(--r-ctrl); font-weight: 600; text-decoration: none; margin-right: 10px; border: 0; }
+div.breadcrumbs { border-bottom: 1px solid var(--line); padding: 10px 32px; }
+
+/* Contenedores de Django */
+.module, .inline-group, fieldset.module { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+.module h2, .module caption, .inline-group h2 { background: var(--surface-2); color: var(--text); font-weight: 650; text-transform: none; letter-spacing: 0; font-size: 14px; }
+#content h1 { font-stretch: 75%; font-weight: 750; font-size: 30px; }
+#changelist .actions, #changelist-filter, .paginator { background: var(--surface); }
+#changelist-filter { border-radius: var(--r-card); border: 1px solid var(--line); }
+#changelist-filter h2 { background: var(--surface-2); text-transform: none; letter-spacing: 0; }
+#changelist table thead th { background: var(--surface-2); text-transform: none; letter-spacing: 0; font-weight: 600; }
+.button, input[type=submit], input[type=button], .submit-row input, a.button { border-radius: var(--r-ctrl); font-weight: 600; }
+input[type=text], input[type=password], input[type=email], input[type=url], input[type=number], textarea, select, .vTextField {
+    background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--r-ctrl);
+}
+
+/* Piezas propias en listas */
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; }
+.bar { display: inline-block; width: 120px; height: 8px; background: var(--surface-3); border-radius: 999px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+.bar span { display: block; height: 100%; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.bad-text { color: var(--bad-ink); font-weight: 600; }
+.bad-text::before { content: '✕ '; }
+.summary { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+/* ---------- Inicio del admin (centro de control) ---------- */
+.dashboard #content { width: auto; max-width: 1320px; }  /* Django lo fija en 600px */
+.cc { display: grid; gap: 18px; }
+.cc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.cc-head p { color: var(--text-2); margin-top: 6px; max-width: 70ch; }
+.cc-head form { margin: 0; }
+.cc-section-title { font-size: 20px; margin-top: 10px; }
+.cc-section-title + p { color: var(--text-2); margin-top: 4px; }
+.cc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cc-kpis .card { padding: 16px; }
+.cc-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+.cc-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.cc .card { min-width: 0; overflow-x: auto; }
+.cc .card h3 { font-size: 16px; font-weight: 650; margin-bottom: 4px; }
+.cc .card .sub { color: var(--text-2); font-size: 13px; margin-bottom: 12px; }
+.cc-chart { position: relative; height: 260px; }
+.cc-chart.sm { height: 210px; }
+.cc .data-table td, .cc .data-table th { font-size: 13px; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.cc .data-table a, .cc-disc a { color: var(--text); font-weight: 600; text-decoration: none; }
+.cc .data-table a:hover, .cc-disc a:hover { color: var(--gold); }
+.cc .scroll { max-height: 440px; overflow: auto; }
+.cc .scroll thead th { position: sticky; top: 0; background: var(--surface); }
+.tag-demo { font-size: 11px; color: var(--text-3); border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; margin-left: 6px; }
+.stale { color: var(--warn); font-weight: 600; }
+.stale::before { content: '◆ '; }
+.cc-models { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cc-model { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctrl); }
+.cc-model a.name { color: var(--text); font-weight: 600; text-decoration: none; }
+.cc-model .actions { display: flex; gap: 6px; }
+.cc-disc { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+.cc-disc:last-child { border-bottom: 0; }
+.cc-disc .mark { grid-row: span 2; }
+.cc-disc .meta { font-size: 12px; color: var(--text-2); grid-column: 2; }
+.cc-disc .val { grid-row: span 2; grid-column: 3; text-align: right; font-stretch: 75%; font-weight: 750; font-size: 20px; }
+
+@media (max-width: 1000px) {
+    .cc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cc-grid, .cc-grid-3 { grid-template-columns: 1fr; }
+    #header, div.breadcrumbs { padding-left: 16px; padding-right: 16px; }
+    .brand-sub { display: none; }
+}

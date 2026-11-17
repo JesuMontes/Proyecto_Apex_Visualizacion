@@ -1,0 +1,47 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iniciar sesión | APEX</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
+    <style>
+        body { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+        .login { width: 100%; max-width: 380px; }
+        .login-logo { display: flex; align-items: baseline; gap: 8px; margin-bottom: 22px; }
+        .login-logo .display { font-size: 32px; }
+        .login-logo span:first-child { color: var(--gold); }
+        .login h1 { font-size: 20px; margin-bottom: 6px; }
+        .login p.sub { color: var(--text-2); font-size: 14px; margin-bottom: 18px; }
+        .login label { display: block; font-size: 13px; color: var(--text-2); font-weight: 600; margin: 14px 0 6px; }
+        .login input { width: 100%; padding: 11px 12px; border-radius: var(--r-ctrl); border: 1px solid var(--line); background: var(--bg); color: var(--text); font: 15px var(--font); }
+        .login input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+        .login .btn { width: 100%; margin-top: 20px; padding: 12px; }
+        .error { background: rgba(208, 59, 59, .12); border: 1px solid rgba(208, 59, 59, .5); color: var(--bad-ink); padding: 10px 12px; border-radius: var(--r-ctrl); font-size: 13px; }
+        .back { display: inline-block; margin-top: 16px; font-size: 13px; color: var(--text-2); }
+    </style>
+</head>
+<body>
+    <main class="login">
+        <div class="login-logo"><span aria-hidden="true">⬡</span><span class="display">APEX</span></div>
+        <div class="card">
+            <h1>Inicia sesión</h1>
+            <p class="sub">Así puedes guardar los portafolios que armes en el simulador.</p>
+            {% if form.errors %}<p class="error">El usuario o la contraseña no coinciden. Revisa e intenta de nuevo.</p>{% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <label for="id_username">Usuario</label>
+                <input type="text" name="username" id="id_username" autocomplete="username" autofocus required>
+                <label for="id_password">Contraseña</label>
+                <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+                <input type="hidden" name="next" value="{{ next }}">
+                <button class="btn btn-primary" type="submit">Iniciar sesión</button>
+            </form>
+        </div>
+        <a class="back" href="/">Volver al dashboard</a>
+    </main>
+</body>
+</html>

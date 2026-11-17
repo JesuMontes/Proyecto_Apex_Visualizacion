@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Admin APEX{% endblock %}
+
+{% block dark-mode-vars %}{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
+    <link rel="stylesheet" href="{% static 'apex/admin.css' %}?v=4">
+{% endblock %}
+
+{% block branding %}
+    <div id="site-name">
+        <a href="{% url 'admin:index' %}">
+            <span class="brand-hex" aria-hidden="true">⬡</span>
+            <span class="brand-name display">APEX</span>
+            <span class="brand-sub">Capital & Intelligence</span>
+            <span class="brand-tag">Admin</span>
+        </a>
+    </div>
+{% endblock %}
+
+{% block userlinks %}
+    <a href="/" class="to-site">Ver dashboard</a>
+    {{ block.super }}
+{% endblock %}

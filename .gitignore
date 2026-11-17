@@ -1,6 +1,7 @@
-.env
 __pycache__/
 *.pyc
-db.sqlite3
 venv/
 .venv/
+.env
+db.sqlite3
+credenciales_demo.txt

@@ -1,0 +1,90 @@
+:root {
+    --primary: #1a1c23;
+    --secondary: #222530;
+    --accent: #f59e0b;
+    --bg-dark: #121318;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #2e323e;
+}
+
+body {
+    background-color: var(--bg-dark) !important;
+    color: var(--text-main) !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+#header {
+    background: var(--primary) !important;
+    color: var(--text-main) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+#header a:link, #header a:visited {
+    color: var(--accent) !important;
+}
+
+div.breadcrumbs {
+    background: var(--secondary) !important;
+    color: var(--text-muted) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.module, .inline-group, div.inline-related {
+    background: var(--primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+}
+
+.module h2, .module caption, .inline-group h2 {
+    background: var(--secondary) !important;
+    color: var(--accent) !important;
+}
+
+#changelist table {
+    background: var(--primary) !important;
+}
+
+#changelist table thead th {
+    background: var(--secondary) !important;
+    color: var(--text-muted) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+#changelist table tbody tr {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+#changelist table tbody tr:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+#changelist table tbody tr:hover {
+    background-color: var(--secondary) !important;
+}
+
+a:link, a:visited {
+    color: #38bdf8 !important;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--accent) !important;
+    color: #121318 !important;
+    font-weight: bold !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 8px 15px !important;
+}
+
+.button.deletelink, a.deletelink {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+input[type=text], input[type=password], input[type=email], select, textarea {
+    background-color: var(--secondary) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    padding: 6px !important;
+}

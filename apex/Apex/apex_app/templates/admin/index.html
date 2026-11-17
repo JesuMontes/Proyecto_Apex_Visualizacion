@@ -1,0 +1,207 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block coltype %}colM{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="cc">
+
+    <!-- 1. CABECERA -->
+    <div class="cc-head">
+        <div>
+            <h1 class="display">Centro de control</h1>
+            <p>Estado de los datos que alimentan el dashboard, actividad de los usuarios y lo que han invertido con el simulador.</p>
+        </div>
+        <form method="post" action="{% url 'admin:apex_sync' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Sincronizar desde CSV</button>
+        </form>
+    </div>
+
+    <div class="cc-kpis">
+        {% for k in kpis %}
+            <div class="card"><div class="stat-label">{{ k.label }}</div><div class="stat-value">{{ k.value }}</div><div class="stat-unit">{{ k.unit }}</div></div>
+        {% endfor %}
+    </div>
+
+    <!-- 2. DISCIPLINAS -->
+    <div class="cc-grid">
+        <div class="card">
+            <h3>Perfil de las cuatro disciplinas</h3>
+            <p class="sub">Las mismas cinco dimensiones del dashboard, escaladas de 20 a 100.</p>
+            <div class="cc-chart"><canvas id="ccRadar" role="img" aria-label="Radar de las disciplinas"></canvas></div>
+        </div>
+        <div class="card">
+            <h3>Resumen por disciplina</h3>
+            <p class="sub">Crecimiento anual, riesgo y capital que los usuarios asignaron a cada una.</p>
+            {% for d in disciplines %}
+                <div class="cc-disc">
+                    {{ d.mark }}
+                    <a href="{% url 'admin:apex_app_discipline_change' d.obj.pk %}"><b>{{ d.obj.name }}</b></a>
+                    <span class="val">{% if d.growth > 0 %}+{% endif %}{{ d.growth|floatformat:1 }}&nbsp;%</span>
+                    <span class="meta">Riesgo {{ d.risk }}, {{ d.invested }} invertidos</span>
+                </div>
+            {% empty %}
+                <p class="sub">La base está vacía. Usa «Sincronizar desde CSV» para cargarla.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 3. USUARIOS E INVERSIONES -->
+    <div>
+        <h2 class="cc-section-title">Usuarios e inversiones</h2>
+        <p>Un usuario está activo si inició sesión en los últimos 30 días. Los marcados como «demo» son datos de demostración.</p>
+    </div>
+    <div class="cc-kpis">
+        {% for k in user_kpis %}
+            <div class="card"><div class="stat-label">{{ k.label }}</div><div class="stat-value">{{ k.value }}</div><div class="stat-unit">{{ k.unit }}</div></div>
+        {% endfor %}
+    </div>
+    <div class="cc-grid">
+        <div class="card">
+            <h3>Usuarios recientes</h3>
+            <p class="sub">Ordenados por último ingreso. <a href="{% url 'admin:auth_user_changelist' %}">Ver todos</a></p>
+            <div class="scroll">
+            <table class="data-table">
+                <thead><tr><th>Usuario</th><th>Estado</th><th>¿Invirtió?</th><th class="num">Capital</th><th>Perfil</th></tr></thead>
+                <tbody>
+                {% for r in user_rows %}
+                    <tr>
+                        <td><a href="{% url 'admin:auth_user_change' r.user.pk %}">{{ r.name }}</a>{% if r.demo %}<span class="tag-demo">demo</span>{% endif %}</td>
+                        <td>{% if r.active %}<span class="ok-text">Activo</span>{% else %}<span class="off-text">Inactivo</span>{% endif %}</td>
+                        <td>{% if r.n_inv %}<span class="ok-text">Sí ({{ r.n_inv }})</span>{% else %}<span class="off-text">No</span>{% endif %}</td>
+                        <td class="num">{{ r.capital }}</td>
+                        <td>{{ r.profile }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">Aún no hay usuarios. Crea usuarios demo con <code>python seed_demo_users.py</code>.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Capital asignado por disciplina</h3>
+            <p class="sub">Suma de todos los portafolios guardados. <a href="{% url 'admin:apex_app_investment_changelist' %}">Ver inversiones</a></p>
+            <div class="cc-chart"><canvas id="ccCapital" role="img" aria-label="Capital invertido por disciplina"></canvas></div>
+        </div>
+    </div>
+
+    <!-- 4. DATOS -->
+    <div>
+        <h2 class="cc-section-title">Datos</h2>
+        <p>Archivos que lee <code>csv_data.py</code>. Si un archivo cambió después de la última sincronización, aparece marcado.</p>
+    </div>
+    <div class="cc-grid">
+        <div class="card">
+            <h3>Estado de los CSV</h3>
+            <div class="scroll">
+            <table class="data-table">
+                <thead><tr><th>Archivo</th><th>Carpeta</th><th class="num">Filas</th><th class="num">Tamaño</th><th>Modificado</th></tr></thead>
+                <tbody>
+                {% for f in csv_files %}
+                    <tr>
+                        <td>{{ f.name }}</td>
+                        <td>{{ f.folder }}</td>
+                        <td class="num">{{ f.rows }}</td>
+                        <td class="num">{{ f.size|filesizeformat }}</td>
+                        <td>{% if f.stale %}<span class="stale">Sin sincronizar</span>{% else %}{{ f.modified|date:"d-m-Y H:i" }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Últimas sincronizaciones</h3>
+            <table class="data-table">
+                <thead><tr><th>Fecha</th><th>Estado</th><th class="num">Registros</th><th class="num">Duración</th></tr></thead>
+                <tbody>
+                {% for log in sync_logs %}
+                    <tr>
+                        <td>{{ log.created_at|date:"d-m-Y H:i" }}</td>
+                        <td>{% if log.ok %}<span class="ok-text">Correcta</span>{% else %}<span class="bad-text" title="{{ log.message }}">Falló</span>{% endif %}</td>
+                        <td class="num">{{ log.records }}</td>
+                        <td class="num">{{ log.duration_s|floatformat:1 }} s</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4">Todavía no hay sincronizaciones registradas.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p class="sub" style="margin-top:12px"><a href="{% url 'admin:apex_app_synclog_changelist' %}">Ver historial completo</a></p>
+        </div>
+    </div>
+
+    <!-- 5. MODELOS -->
+    <div><h2 class="cc-section-title">Modelos</h2></div>
+    {% if app_list %}
+        <div class="cc-models">
+            {% for app in app_list %}{% for model in app.models %}
+                <div class="cc-model">
+                    <a class="name" href="{{ model.admin_url }}">{{ model.name }}</a>
+                    <span class="actions">
+                        {% if model.add_url %}<a class="btn btn-sm" href="{{ model.add_url }}">Agregar</a>{% endif %}
+                        {% if model.admin_url %}<a class="btn btn-sm btn-ghost" href="{{ model.admin_url }}">Ver</a>{% endif %}
+                    </span>
+                </div>
+            {% endfor %}{% endfor %}
+        </div>
+    {% else %}
+        <p>No tienes permisos para editar modelos.</p>
+    {% endif %}
+</div>
+
+{{ chart_data|json_script:"cc-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const data = JSON.parse(document.getElementById('cc-data').textContent);
+    if (!data.disciplines.length) return;
+    const grid = '#252935', text = '#e8eaf0', text2 = '#9aa3b5';
+    Chart.defaults.color = text2;
+    Chart.defaults.font.family = "Archivo, 'Segoe UI', sans-serif";
+    Chart.defaults.maintainAspectRatio = false;
+    Object.assign(Chart.defaults.plugins.legend.labels, { usePointStyle: true, boxWidth: 8, boxHeight: 8, color: text });
+    Object.assign(Chart.defaults.plugins.tooltip, { backgroundColor: '#0e1015', borderColor: '#2c303c', borderWidth: 1, padding: 10, usePointStyle: true });
+    const money = v => '$' + Math.round(v).toLocaleString('es-CL');
+    const legendPos = window.innerWidth < 700 ? 'bottom' : 'right';
+
+    new Chart(document.getElementById('ccRadar'), {
+        type: 'radar',
+        data: { labels: data.axes, datasets: data.disciplines.map(d => ({
+            label: d.name, data: data.axes.map(a => d.scores[a] || 0), borderColor: d.color, backgroundColor: d.color + '1f',
+            pointBackgroundColor: d.color, pointStyle: d.shape, pointRadius: 3, borderWidth: 2, fill: true })) },
+        options: {
+            scales: { r: { min: 0, max: 100, grid: { color: grid }, angleLines: { color: grid }, ticks: { display: false },
+                           pointLabels: { color: text, font: { size: 12, weight: '600' } } } },
+            plugins: { legend: { position: legendPos } },
+        },
+    });
+
+    const invested = data.disciplines.filter(d => d.invested > 0);
+    const capCanvas = document.getElementById('ccCapital');
+    if (!invested.length) {
+        capCanvas.parentElement.innerHTML = '<p class="sub">Todavía no hay portafolios guardados.</p>';
+        return;
+    }
+    new Chart(capCanvas, {
+        type: 'doughnut',
+        data: { labels: invested.map(d => d.name), datasets: [{ data: invested.map(d => d.invested),
+                backgroundColor: invested.map(d => d.color), borderColor: '#1b1e26', borderWidth: 3 }] },
+        options: {
+            cutout: '66%',
+            plugins: { legend: { position: legendPos },
+                       tooltip: { callbacks: { label: c => {
+                           const total = c.dataset.data.reduce((a, b) => a + b, 0);
+                           return ` ${money(c.parsed)} (${(c.parsed / total * 100).toFixed(1).replace('.', ',')} %)`;
+                       } } } },
+        },
+    });
+})();
+</script>
+{% endblock %}

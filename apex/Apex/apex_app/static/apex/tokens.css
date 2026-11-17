@@ -1,0 +1,117 @@
+/* APEX · sistema visual compartido por la vista de usuario y el panel de admin */
+:root {
+    color-scheme: dark;
+    --bg: #14161c;
+    --surface: #1b1e26;
+    --surface-2: #222632;
+    --surface-3: #2a2f3c;
+    --line: #2c303c;
+    --grid: #252935;
+    --text: #e8eaf0;
+    --text-2: #9aa3b5;
+    --text-3: #6b7385;
+    --gold: #f5a524;
+    --gold-soft: rgba(245, 165, 36, 0.14);
+    --gold-ink: #1a1305;
+
+    /* Estado: siempre acompañado de ícono + texto */
+    --good: #0ca30c;
+    --good-ink: #4ade80;
+    --warn: #fab219;
+    --bad: #d03b3b;
+    --bad-ink: #f87171;
+
+    /* Disciplinas (validadas para daltonismo, todos los pares) */
+    --fifa: #1fa37a;
+    --lol: #e0563b;
+    --cs2: #e8c547;
+    --sc2: #3d84e8;
+
+    --font: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+    --r-card: 10px;
+    --r-ctrl: 6px;
+    --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 700; line-height: 1.2; }
+p { margin: 0; }
+a { color: var(--gold); }
+
+/* Titulares estilo marcador: Archivo condensada */
+.display { font-stretch: 75%; font-weight: 750; letter-spacing: -0.01em; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- Componentes ---------- */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-card);
+    padding: 20px;
+    min-width: 0;
+}
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font: 600 14px/1 var(--font);
+    padding: 10px 16px; border-radius: var(--r-ctrl);
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+    cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s;
+}
+.btn:hover { background: var(--surface-3); }
+.btn-primary { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.btn-primary:hover { background: #ffb73d; }
+.btn-ghost { background: transparent; }
+.btn-sm { padding: 6px 10px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--text); white-space: nowrap;
+}
+
+/* Riesgo: texto + ícono, nunca solo color */
+.risk { font-weight: 600; white-space: nowrap; }
+.risk::before { margin-right: 4px; }
+.risk-bajo { color: var(--good-ink); } .risk-bajo::before { content: '▼'; font-size: .8em; }
+.risk-medio { color: var(--warn); } .risk-medio::before { content: '◆'; font-size: .8em; }
+.risk-alto { color: var(--bad-ink); } .risk-alto::before { content: '▲'; font-size: .8em; }
+
+/* Marca de disciplina: forma + color (codificación doble) */
+.mark { display: inline-block; width: 10px; height: 10px; flex: none; background: currentColor; }
+.mark-circle { border-radius: 50%; }
+.mark-rect { border-radius: 1px; }
+.mark-rectRot { transform: rotate(45deg) scale(.85); border-radius: 1px; }
+.mark-triangle { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+
+.stat-label { font-size: 13px; color: var(--text-2); }
+.stat-value { font-size: 30px; font-stretch: 75%; font-weight: 750; line-height: 1.1; margin-top: 4px; }
+.stat-unit { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.data-table th { text-align: left; font-weight: 600; color: var(--text-2); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.data-table td { padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+.data-table td.num, .data-table th.num { text-align: right; }
+.data-table tbody tr:hover { background: var(--surface-2); }
+
+.ok-text { color: var(--good-ink); font-weight: 600; }
+.ok-text::before { content: '● '; }
+.off-text { color: var(--text-3); font-weight: 600; }
+.off-text::before { content: '○ '; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+}
