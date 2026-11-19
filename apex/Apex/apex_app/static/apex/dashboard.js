@@ -694,16 +694,67 @@ function renderSim() {
                                return ` ${money(c.parsed)} (${nf(c.parsed / total * 100, 1)} %)`;
                            } } } },
                 onHover: (_e, els, chart) => setHighlight(els.length ? chart.data.datasets[0].slugs[els[0].index] : null),
+                onClick: (_e, els, chart) => { if (els.length) openSportModal(chart.data.datasets[0].slugs[els[0].index]); },
             },
         });
         $('#doughnutChart').onmouseleave = () => setHighlight(null);
     }
     const sorted = alloc.slice().sort((x, y) => y.share - x.share);
-    $('#alloc-list').innerHTML = sorted.map(x => `<li>${markHTML(x.slug)}
+    $('#alloc-list').innerHTML = sorted.map(x => `<li data-slug="${x.slug}" tabindex="0" role="button" title="Ver detalle de ${esc(x.name)}">${markHTML(x.slug)}
         <span>${esc(x.name)}<span class="risk risk-${x.risk_level}">${x.risk_level}</span></span>
         <span class="pct">${nf(x.share * 100, 1)} %</span><span class="usd">${money(x.amount)}</span></li>`).join('');
     setTable('portfolio', ['Disciplina', 'Riesgo', '% del capital', 'Monto'],
         sorted.map(x => [x.name, x.risk_level, nf(x.share * 100, 1) + ' %', money(x.amount)]), [2, 3]);
+}
+
+// ---------------------------------------------------------------- ventana de detalle del simulador
+async function openSportModal(slug) {
+    const x = state.lastAlloc.find(a => a.slug === slug);
+    if (!x) return;
+    const growth = Math.max(-25, Math.min(25, x.growth));  // mismo límite que el retorno del portafolio
+    const gain = x.amount * growth / 100;
+    const fit = RISK_FIT[state.risk][x.risk_level];
+
+    $('#sm-title').innerHTML = `${markHTML(slug)} ${esc(x.name)} <span class="risk risk-${x.risk_level}">riesgo ${x.risk_level}</span>`;
+    $('#sm-stats').innerHTML = `
+        <div class="stat"><div class="stat-label">Monto asignado</div><div class="stat-value">${money(x.amount)}</div>
+            <div class="stat-unit">${nf(x.share * 100, 1)} % del capital</div></div>
+        <div class="stat"><div class="stat-label">Proyección a 1 año</div><div class="stat-value ${gain >= 0 ? 'pos' : 'neg'}">${gain >= 0 ? '+' : '−'}${moneyCompact(Math.abs(gain))}</div>
+            <div class="stat-unit">tendencia de ${signed(x.growth)} % por año</div></div>
+        <div class="stat"><div class="stat-label">Volatilidad</div><div class="stat-value">±${nf(x.volatility, 1)} %</div>
+            <div class="stat-unit">cuánto se aleja de su tendencia</div></div>`;
+
+    let why = `Con un perfil ${state.risk}, `;
+    if (fit > 1) why += `una disciplina de riesgo ${x.risk_level} recibe más peso (×${nf(fit, 1)}), porque buscas crecimiento.`;
+    else if (fit < 1) why += `una disciplina de riesgo ${x.risk_level} recibe menos peso (×${nf(fit, 1)}), porque priorizas la estabilidad.`;
+    else if (state.risk === 'balanceado') why += 'ningún nivel de riesgo cambia el peso: cuenta solo el puntaje en las cinco dimensiones.';
+    else if (state.risk === 'conservador') why += `una disciplina de riesgo ${x.risk_level} mantiene todo su peso, mientras a las de más riesgo se les resta.`;
+    else why += `una disciplina de riesgo ${x.risk_level} mantiene su peso normal, mientras las de riesgo alto reciben más.`;
+    $('#sm-why').textContent = why;
+
+    $('#sm-scores').innerHTML = state.data.radar.categories.map(axis => {
+        const v = Math.round(x.scores[axis] || 0);
+        return `<div class="sm-score"><span>${axis}</span><span class="sm-bar"><span style="width:${v}%;background:${x.color}"></span></span><b>${v}</b></div>`;
+    }).join('');
+    $('#sm-facts').textContent = `Región dominante: ${x.top_region} (${nf(x.top_share, 0)} % de los títulos) · Paridad promedio: ${nf(x.parity_avg, 1)} %`;
+
+    $('#sm-more').onclick = () => { $('#sport-modal').close(); state.detail = slug; showTab('disciplinas'); };
+    $('#sport-modal').showModal();
+
+    // Mini gráfico con la escala del evento (se pide a la API la primera vez)
+    const cfg = DETAIL[slug].scale;
+    $('#sm-chart-title').textContent = cfg.title;
+    const det = await loadDetail(slug);
+    const pts = det.series[cfg.series];
+    makeChart('sportModal', 'smChart', {
+        type: 'bar',
+        data: { labels: pts.map(p => p.label), datasets: [{ data: pts.map(p => p.value), backgroundColor: x.color, borderRadius: 3, maxBarThickness: 18 }] },
+        options: {
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${cfg.fmt(c.parsed.y)} ${cfg.unit}` } } },
+            scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+                      y: { grid: { color: C.grid }, ticks: { maxTicksLimit: 4, callback: v => cfg.fmt(v) } } },
+        },
+    });
 }
 
 function getCookie(name) {
@@ -778,6 +829,18 @@ function setupEvents() {
         btn.textContent = showing ? 'Ver gráfico' : 'Ver tabla';
     });
     $('#capital-slider').addEventListener('input', renderSim);
+
+    // Ventana de detalle: abrir desde la lista, cerrar con el botón o haciendo clic fuera
+    $('#alloc-list').addEventListener('click', e => {
+        const li = e.target.closest('li[data-slug]');
+        if (li) openSportModal(li.dataset.slug);
+    });
+    $('#alloc-list').addEventListener('keydown', e => {
+        const li = e.target.closest('li[data-slug]');
+        if (li && e.key === 'Enter') openSportModal(li.dataset.slug);
+    });
+    $('#sm-close').addEventListener('click', () => $('#sport-modal').close());
+    $('#sport-modal').addEventListener('click', e => { if (e.target.id === 'sport-modal') $('#sport-modal').close(); });
     document.querySelectorAll('#risk-select button').forEach(b => b.addEventListener('click', () => {
         document.querySelectorAll('#risk-select button').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-checked', x === b); });
         state.risk = b.dataset.risk;

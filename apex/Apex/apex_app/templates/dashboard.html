@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'apex/tokens.css' %}?v=4">
-    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'apex/dashboard.css' %}?v=8">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -269,12 +269,35 @@
                 <div class="chart-box h-dona"><canvas id="doughnutChart" role="img" aria-label="Distribución del capital por disciplina"></canvas></div>
                 <div class="table-view" hidden></div>
                 <ul class="alloc" id="alloc-list"></ul>
+                <p class="fineprint">Haz clic en el anillo o en una disciplina de la lista para ver su detalle.</p>
             </article>
         </div>
     </section>
 
 </main>
 
-<script src="{% static 'apex/dashboard.js' %}?v=7"></script>
+<!-- Ventana con el detalle de una disciplina del simulador -->
+<dialog class="sport-modal" id="sport-modal" aria-labelledby="sm-title">
+    <div class="sm-head">
+        <h2 id="sm-title"></h2>
+        <button class="btn btn-sm btn-ghost" id="sm-close" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="stat-row stat-row-3" id="sm-stats"></div>
+    <p class="sm-why" id="sm-why"></p>
+    <div class="sm-cols">
+        <div>
+            <h3>Puntajes del radar</h3>
+            <div id="sm-scores"></div>
+        </div>
+        <div>
+            <h3 id="sm-chart-title">Evolución</h3>
+            <div class="chart-box sm-chart"><canvas id="smChart" role="img"></canvas></div>
+        </div>
+    </div>
+    <p class="sm-facts" id="sm-facts"></p>
+    <button class="btn btn-primary" id="sm-more">Ver ficha completa</button>
+</dialog>
+
+<script src="{% static 'apex/dashboard.js' %}?v=9"></script>
 </body>
 </html>
